@@ -52,8 +52,8 @@ def ping(sleep_time=1):
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(run(1, sleep_time))
     results = loop.run_until_complete(future)
-    print(f"i am trying this endpoint: {make_url(1, str(uuid())[:8])}")
-    print(f"ping back took {(dt.datetime.now() - start).total_seconds()}s")
+    print(f"i am trying this endpoint now: {make_url(1, str(uuid())[:8])}")
+    print(f"ping back took {(dt.datetime.now() - start).total_seconds()} seconds")
     print(f"this is what we got back:\n{results[0]}")
 
 
