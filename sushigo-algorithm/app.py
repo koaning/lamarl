@@ -1,8 +1,10 @@
+import sys
+sys.path.append(".")
+
 from chalice import Chalice
 from chalicelib import Card
 
 app = Chalice(app_name='sushigo-algorithm')
-
 
 @app.route('/')
 def index():
