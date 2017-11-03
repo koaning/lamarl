@@ -1,8 +1,6 @@
-from sushigo.deck import StandardDeck
+from .deck import StandardDeck
 from itertools import islice
-import numpy as np
 import pandas as pd
-import datetime
 import uuid
 import pprint
 

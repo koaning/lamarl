@@ -1,0 +1,2 @@
+# sushigo algorithm
+

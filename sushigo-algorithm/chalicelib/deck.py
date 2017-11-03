@@ -2,8 +2,8 @@ from copy import copy, deepcopy
 from random import shuffle, choice
 from numpy import infty
 
-from sushigo.cards import Card, MakiCard, SashimiCard, WasabiCard, DumplingCard, PuddingCard, NigiriCard, TempuraCard
-from sushigo.cards import sum_scores
+from .cards import Card, MakiCard, SashimiCard, WasabiCard, DumplingCard, PuddingCard, NigiriCard, TempuraCard
+from .cards import sum_scores
 
 
 class Deck:
