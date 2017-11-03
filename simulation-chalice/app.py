@@ -5,7 +5,7 @@ import socket
 import random
 
 app = Chalice(app_name='simulation-chalice')
-
+app.debug = True
 
 @app.route('/')
 def index():
@@ -21,11 +21,11 @@ def simulate(scale, times):
     return {'scale': int(scale), 'times': int(times), 'sum': s, 'mean': s/int(times), 'time': str(dt.datetime.now() - start)}
 
 
-@app.route('/sleep/{seconds}')
-def sleep(seconds):
+@app.route('/sleep/{seconds}/{uniq_id}')
+def sleep(seconds, uniq_id):
     start = dt.datetime.now()
     time.sleep(float(seconds))
-    return {"seconds": seconds, "starttime": str(start), "endtime": str(dt.datetime.now()), "hostname": socket.gethostname()}
+    return {"seconds": seconds, "starttime": str(start), "endtime": str(dt.datetime.now()), "hostname": socket.gethostname(), "uniq_id": uniq_id}
 
 
 @app.lambda_function(name='sleeper')
