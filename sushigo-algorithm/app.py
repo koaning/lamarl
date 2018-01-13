@@ -3,7 +3,7 @@ import math
 from chalice import Chalice
 
 app = Chalice(app_name='sushigo-algorithm')
-
+app.debug = True
 
 def sort_hand(hand, order):
     card_dict = {card: i for i, card in enumerate(order)}
@@ -12,6 +12,12 @@ def sort_hand(hand, order):
 
 def score_table(hand_player, hand_opponent):
     score = 0
+    player_temaki = sum([1 for c in hand_player if c == "temaki"])
+    opponent_temaki = sum([1 for c in hand_opponent if c == "temaki"])
+    if player_temaki > opponent_temaki:
+        score += 4
+    hand_player = [c for c in hand_player if c != "temaki"]
+    hand_opponent = [c for c in hand_opponent if c != "temaki"]
     multiplier = 1
     for card in hand_player:
         if card == "wasabi":
@@ -48,11 +54,6 @@ def score_table(hand_player, hand_opponent):
     player_eel = sum([1 for c in hand_player if c == "eel"])
     eel_scores = [0, -3, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
     score += eel_scores[player_eel]
-
-    player_temaki = sum([1 for c in hand_player if c == "temaki"])
-    opponent_temaki = sum([1 for c in hand_opponent if c == "temaki"])
-    if player_temaki > opponent_temaki:
-        score += 4
     return score
 
 

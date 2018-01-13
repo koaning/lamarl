@@ -64,7 +64,7 @@ def ping(n_sim=1000):
     print(f"ping back took {(dt.datetime.now() - start).total_seconds()} seconds")
     print(f"this is what we got back:\n{results[0]}")
 
-def random_search(n_rounds=10, n_population=10, n_sim=1000):
+def random_population(n_population=10, n_sim=1000):
     init_order = ["maki-1", "maki-2", "maki-3", "sashimi",
                   "egg", "salmon", "squid", "wasabi", "pudding",
                   "tempura", "dumpling", "tofu", "eel", "temaki"]
@@ -77,10 +77,40 @@ def random_search(n_rounds=10, n_population=10, n_sim=1000):
     future = asyncio.ensure_future(run(json_bodies=json_bodies, n_sim=n_sim))
     results = loop.run_until_complete(future)
     loop.close()
-    print([int(i) for i in results])
+    print(f"i just parsed {len(json_bodies)} sequences")
+    return [(results[i], json_bodies[i]) for i,c in enumerate(json_bodies)]
+
+def score_population(json_bodies, n_sim=1000):
+    loop = asyncio.get_event_loop()
+    future = asyncio.ensure_future(run(json_bodies=json_bodies, n_sim=n_sim))
+    results = loop.run_until_complete(future)
+    return [(results[i], json_bodies[i]) for i, c in enumerate(json_bodies)]
+
+def make_random_switch(order):
+    idx1, idx2 = random.choices([i for i in range(len(order))], k=2)
+    order[idx1], order[idx2] = order[idx2], order[idx1]
+    return order
+
+def apply_search(n_rounds=10, n_population=10, n_sim=1000):
+    init_order = ["maki-1", "maki-2", "maki-3", "sashimi",
+                  "egg", "salmon", "squid", "wasabi", "pudding",
+                  "tempura", "dumpling", "tofu", "eel", "temaki"]
+    json_bodies = []
+    for i in range(n_population):
+        random.shuffle(init_order)
+        json_bodies.append({"order": init_order})
+
+    for i in range(n_rounds):
+        start = dt.datetime.now()
+        score_tuples = score_population(json_bodies=json_bodies, n_sim=n_sim)
+        best_scored = sorted(score_tuples, key=lambda x: x[0])[-1]
+        score, body = best_scored
+        print(f"round: {i+1} best score: {int(score)} time: {(dt.datetime.now() - start).total_seconds()} seconds")
+        json_bodies = [{"order": make_random_switch(body['order'])} for i in range(n_population-1)] + [body]
 
 if __name__ == "__main__":
     fire.Fire({
         'ping': ping,
-        'random-search': random_search
+        'random-search': random_population,
+        'evolve': apply_search
     })
