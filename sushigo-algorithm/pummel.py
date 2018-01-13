@@ -2,6 +2,7 @@ import asyncio
 from aiohttp import ClientSession, TCPConnector
 import datetime as dt
 import fire
+import random
 import json
 from uuid import uuid4 as uuid
 
@@ -47,12 +48,12 @@ async def run(json_bodies, n_sim=1000):
 #     for i in range(min_requests, max_requests, stepsize):
 #         run_batch(n=i, sleep_time=sleep_time)
 
-
 def ping(n_sim=1000):
     start = dt.datetime.now()
     json_body = {
-        "order": ["maki-1", "maki-2", "maki-3", "sashimi", "egg", "salmon", "squid",
-                  "wasabi", "pudding", "tempura", "dumpling"]
+        "order": ["maki-1", "maki-2", "maki-3", "sashimi",
+                  "egg", "salmon", "squid", "wasabi", "pudding",
+                  "tempura", "dumpling", "tofu", "eel", "temaki"]
     }
     print(f"i am trying this endpoint now: {make_url(n_sim=n_sim)}")
     print(f"i will send along standard json payload:\n{json_body}")
@@ -63,8 +64,23 @@ def ping(n_sim=1000):
     print(f"ping back took {(dt.datetime.now() - start).total_seconds()} seconds")
     print(f"this is what we got back:\n{results[0]}")
 
+def random_search(n_rounds=10, n_population=10, n_sim=1000):
+    init_order = ["maki-1", "maki-2", "maki-3", "sashimi",
+                  "egg", "salmon", "squid", "wasabi", "pudding",
+                  "tempura", "dumpling", "tofu", "eel", "temaki"]
+    json_bodies = []
+    for i in range(n_population):
+        random.shuffle(init_order)
+        json_bodies.append({"order": init_order})
+
+    loop = asyncio.get_event_loop()
+    future = asyncio.ensure_future(run(json_bodies=json_bodies, n_sim=n_sim))
+    results = loop.run_until_complete(future)
+    loop.close()
+    print([int(i) for i in results])
 
 if __name__ == "__main__":
     fire.Fire({
-        'ping': ping
+        'ping': ping,
+        'random-search': random_search
     })

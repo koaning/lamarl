@@ -33,18 +33,37 @@ def score_table(hand_player, hand_opponent):
         score += 3
     player_sashimi = sum([1 for c in hand_player if c == "sashimi"])
     score += math.floor(player_sashimi/3)
+
     player_tempura = sum([1 for c in hand_player if c == "tempura"])
     score += math.floor(player_tempura / 3)
+
     player_dumpling = sum([1 for c in hand_player if c == "dumpling"])
-    dumpling_scores = [0, 1, 3, 6, 10, 15, 16, 18, 21, 25, 30]
+    dumpling_scores = [0, 1, 3, 6, 10, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
     score += dumpling_scores[player_dumpling]
+
+    player_tofu = sum([1 for c in hand_player if c == "tofu"])
+    tofu_scores = [0, 2, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    score += tofu_scores[player_tofu]
+
+    player_eel = sum([1 for c in hand_player if c == "eel"])
+    eel_scores = [0, -3, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+    score += eel_scores[player_eel]
+
+    player_temaki = sum([1 for c in hand_player if c == "temaki"])
+    opponent_temaki = sum([1 for c in hand_opponent if c == "temaki"])
+    if player_temaki > opponent_temaki:
+        score += 4
     return score
 
 
 def simulate(order):
+    """
+    There's 14 cards, so there's 14! = 87178291200 possibilities! 
+    Such complexity! Must have compute power! 
+    """
     cards = ["maki-1", "maki-2", "maki-3", "sashimi",
              "egg", "salmon", "squid", "wasabi", "pudding",
-             "tempura", "dumpling"]
+             "tempura", "dumpling", "tofu", "eel", "temaki"]
     deck = cards * 5
     random.shuffle(deck)
 
