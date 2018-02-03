@@ -5,16 +5,21 @@ import fire
 import random
 import json
 from uuid import uuid4 as uuid
+import numpy as np
+import async_timeout
+
 
 # superbad error if you're running this on a mac
 # https://github.com/Cog-Creators/Red-DiscordBot/issues/581
 
 def make_url(n_sim=1):
-    return f"https://zblufwr0wi.execute-api.eu-west-1.amazonaws.com/api/sim/{n_sim}"
+    return f"https://7rlli5d2lj.execute-api.eu-west-1.amazonaws.com/api/sim/{n_sim}"
 
 async def fetch(url, json_body, session):
-    async with session.post(url, json=json_body) as response:
-        return await response.read()
+    # TODO WHAT IS THE TIMEOUT?!?!
+    with async_timeout.timeout(60):
+        async with session.post(url, json=json_body) as response:
+            return await response.read()
 
 async def run(json_bodies, n_sim=1000):
     tasks = []
@@ -69,8 +74,8 @@ def random_population(n_population=10, n_sim=1000):
                   "egg", "salmon", "squid", "wasabi", "pudding",
                   "tempura", "dumpling", "tofu", "eel", "temaki"]
     json_bodies = []
+    random.shuffle(init_order)
     for i in range(n_population):
-        random.shuffle(init_order)
         json_bodies.append({"order": init_order})
 
     loop = asyncio.get_event_loop()
@@ -104,9 +109,14 @@ def apply_search(n_rounds=10, n_population=10, n_sim=1000):
         start = dt.datetime.now()
         score_tuples = score_population(json_bodies=json_bodies, n_sim=n_sim)
         best_scored = sorted(score_tuples, key=lambda x: x[0])[-1]
-        score, body = best_scored
+        score, best_body = best_scored
         print(f"round: {i+1} best score: {int(score)} time: {(dt.datetime.now() - start).total_seconds()} seconds")
-        json_bodies = [{"order": make_random_switch(body['order'])} for i in range(n_population-1)] + [body]
+        print(f"these are the top scores: {[int(i[0]) for i in sorted(score_tuples, key=lambda x: x[0])][-10:]}")
+        json_bodies = [{"order": make_random_switch(best_body['order'])} for i in range(n_population-1)] + [best_body]
+        same_scores = score_population(json_bodies=[best_body for i in range(n_population)], n_sim=n_sim)
+        same_scores = [int(i[0]) for i in same_scores]
+        print(f"mind you, this is the mean: {np.mean(same_scores)}, std: {np.std(same_scores)} and max: {np.max(same_scores)}")
+        print(f"best order sofar: {best_body['order']}")
 
 if __name__ == "__main__":
     fire.Fire({

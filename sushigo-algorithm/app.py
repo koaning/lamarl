@@ -9,7 +9,6 @@ def sort_hand(hand, order):
     card_dict = {card: i for i, card in enumerate(order)}
     return sorted(hand, key=lambda x: card_dict[x])
 
-
 def score_table(hand_player, hand_opponent):
     score = 0
     player_temaki = sum([1 for c in hand_player if c == "temaki"])
@@ -56,7 +55,6 @@ def score_table(hand_player, hand_opponent):
     score += eel_scores[player_eel]
     return score
 
-
 def simulate(order):
     """
     There's 14 cards, so there's 14! = 87178291200 possibilities! 
@@ -91,24 +89,4 @@ def mirror():
 @app.route('/sim/{n}', methods=['POST'])
 def simulation_endpoint(n):
     json_body = app.current_request.json_body
-    return sum(simulate(json_body['order']) for _ in range(int(n)))
-
-# The view function above will return {"hello": "world"}
-# whenever you make an HTTP GET request to '/'.
-#
-# Here are a few more examples:
-#
-# @app.route('/hello/{name}')
-# def hello_name(name):
-#    # '/hello/james' -> {"hello": "james"}
-#    return {'hello': name}
-#
-# @app.route('/users', methods=['POST'])
-# def create_user():
-#     # This is the JSON body the user sent in their POST request.
-#     user_as_json = app.current_request.json_body
-#     # We'll echo the json body back to the user in a 'user' key.
-#     return {'user': user_as_json}
-#
-# See the README documentation for more examples.
-#
+    return sum([simulate(json_body['order']) for _ in range(int(n))])
