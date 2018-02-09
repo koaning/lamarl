@@ -3,10 +3,13 @@ from aiohttp import ClientSession, TCPConnector
 import datetime as dt
 import fire
 import random
+from evol import Population
+from evol.helpers.pickers import pick_random
 import json
 from uuid import uuid4 as uuid
 import numpy as np
 import async_timeout
+from pprint import pprint
 
 
 # superbad error if you're running this on a mac
@@ -17,7 +20,7 @@ def make_url(n_sim=1):
 
 async def fetch(url, json_body, session):
     # TODO WHAT IS THE TIMEOUT?!?!
-    with async_timeout.timeout(60):
+    with async_timeout.timeout(160):
         async with session.post(url, json=json_body) as response:
             return await response.read()
 
@@ -89,10 +92,29 @@ def score_population(json_bodies, n_sim=1000):
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(run(json_bodies=json_bodies, n_sim=n_sim))
     results = loop.run_until_complete(future)
-    return [(results[i], json_bodies[i]) for i, c in enumerate(json_bodies)]
+    return [(results[i], body) for i, body in enumerate(json_bodies)]
 
 def make_random_switch(order):
     idx1, idx2 = random.choices([i for i in range(len(order))], k=2)
+    order[idx1], order[idx2] = order[idx2], order[idx1]
+    return order
+
+def swapper(order, **kwargs):
+    order = list(order)
+    idx1 = random.randint(0, len(order) - 2)
+    idx2 = random.randint(idx1 + 1, len(order) - 1)
+    if ('maki-1' in order[idx1]) and ('maki-2' in order[idx2]):
+        return swapper(order)
+    if ('maki-1' in order[idx1]) and ('maki-3' in order[idx2]):
+        return swapper(order)
+    if ('maki-2' in order[idx1]) and ('maki-3' in order[idx2]):
+        return swapper(order)
+    if ('egg' in order[idx1]) and ('salmon' in order[idx2]):
+        return swapper(order)
+    if ('egg' in order[idx1]) and ('squid' in order[idx2]):
+        return swapper(order)
+    if ('salmon' in order[idx1]) and ('squid' in order[idx2]):
+        return swapper(order)
     order[idx1], order[idx2] = order[idx2], order[idx1]
     return order
 
@@ -103,20 +125,19 @@ def apply_search(n_rounds=10, n_population=10, n_sim=1000):
     json_bodies = []
     for i in range(n_population):
         random.shuffle(init_order)
-        json_bodies.append({"order": init_order})
+        json_bodies.append({"order": init_order[:]})
 
     for i in range(n_rounds):
         start = dt.datetime.now()
-        score_tuples = score_population(json_bodies=json_bodies, n_sim=n_sim)
-        best_scored = sorted(score_tuples, key=lambda x: x[0])[-1]
-        score, best_body = best_scored
-        print(f"round: {i+1} best score: {int(score)} time: {(dt.datetime.now() - start).total_seconds()} seconds")
-        print(f"these are the top scores: {[int(i[0]) for i in sorted(score_tuples, key=lambda x: x[0])][-10:]}")
-        json_bodies = [{"order": make_random_switch(best_body['order'])} for i in range(n_population-1)] + [best_body]
-        same_scores = score_population(json_bodies=[best_body for i in range(n_population)], n_sim=n_sim)
-        same_scores = [int(i[0]) for i in same_scores]
-        print(f"mind you, this is the mean: {np.mean(same_scores)}, std: {np.std(same_scores)} and max: {np.max(same_scores)}")
-        print(f"best order sofar: {best_body['order']}")
+        scores = score_population(json_bodies=json_bodies, n_sim=n_sim)
+        scores = sorted(scores, key = lambda x: int(x[0]))
+        score_dict = {tuple(k['order']):int(v) for v,k in scores}
+        pop = Population([k for k,v in score_dict.items()], lambda k: score_dict[k])
+        pop = pop.survive(fraction=0.1).breed(pick_random, swapper, n_parents=1, population_size=n_population)
+        print(f"round: {str(i+1).zfill(4)} best score: {max(score_dict.values())} time: {(dt.datetime.now() - start).total_seconds()}s")
+        print(",".join([s[0:3]+s[-1] for s in scores[-1][1]['order']]))
+        json_bodies = [{"order": i.chromosome} for i in pop]
+
 
 if __name__ == "__main__":
     fire.Fire({
