@@ -3,15 +3,20 @@ import math
 from chalice import Chalice
 
 app = Chalice(app_name='sushigo-algorithm')
-
+app.debug = True
 
 def sort_hand(hand, order):
     card_dict = {card: i for i, card in enumerate(order)}
     return sorted(hand, key=lambda x: card_dict[x])
 
-
 def score_table(hand_player, hand_opponent):
     score = 0
+    player_temaki = sum([1 for c in hand_player if c == "temaki"])
+    opponent_temaki = sum([1 for c in hand_opponent if c == "temaki"])
+    if player_temaki > opponent_temaki:
+        score += 4
+    hand_player = [c for c in hand_player if c != "temaki"]
+    hand_opponent = [c for c in hand_opponent if c != "temaki"]
     multiplier = 1
     for card in hand_player:
         if card == "wasabi":
@@ -33,18 +38,31 @@ def score_table(hand_player, hand_opponent):
         score += 3
     player_sashimi = sum([1 for c in hand_player if c == "sashimi"])
     score += math.floor(player_sashimi/3)
+
     player_tempura = sum([1 for c in hand_player if c == "tempura"])
     score += math.floor(player_tempura / 3)
+
     player_dumpling = sum([1 for c in hand_player if c == "dumpling"])
-    dumpling_scores = [0, 1, 3, 6, 10, 15, 16, 18, 21, 25, 30]
+    dumpling_scores = [0, 1, 3, 6, 10, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
     score += dumpling_scores[player_dumpling]
+
+    player_tofu = sum([1 for c in hand_player if c == "tofu"])
+    tofu_scores = [0, 2, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    score += tofu_scores[player_tofu]
+
+    player_eel = sum([1 for c in hand_player if c == "eel"])
+    eel_scores = [0, -3, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+    score += eel_scores[player_eel]
     return score
 
-
 def simulate(order):
+    """
+    There's 14 cards, so there's 14! = 87178291200 possibilities! 
+    Such complexity! Must have compute power! 
+    """
     cards = ["maki-1", "maki-2", "maki-3", "sashimi",
              "egg", "salmon", "squid", "wasabi", "pudding",
-             "tempura", "dumpling"]
+             "tempura", "dumpling", "tofu", "eel", "temaki"]
     deck = cards * 5
     random.shuffle(deck)
 
@@ -71,24 +89,4 @@ def mirror():
 @app.route('/sim/{n}', methods=['POST'])
 def simulation_endpoint(n):
     json_body = app.current_request.json_body
-    return sum(simulate(json_body['order']) for _ in range(int(n)))
-
-# The view function above will return {"hello": "world"}
-# whenever you make an HTTP GET request to '/'.
-#
-# Here are a few more examples:
-#
-# @app.route('/hello/{name}')
-# def hello_name(name):
-#    # '/hello/james' -> {"hello": "james"}
-#    return {'hello': name}
-#
-# @app.route('/users', methods=['POST'])
-# def create_user():
-#     # This is the JSON body the user sent in their POST request.
-#     user_as_json = app.current_request.json_body
-#     # We'll echo the json body back to the user in a 'user' key.
-#     return {'user': user_as_json}
-#
-# See the README documentation for more examples.
-#
+    return sum([simulate(json_body['order']) for _ in range(int(n))])
